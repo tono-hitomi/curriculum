@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  nginx:
+    container_name: curriculum-nginx
+    image: nginx:latest
+    volumes:
+      - ./docker/nginx:/etc/nginx/conf.d
+      - ./app:/var/www/html
+    ports:
+      - "80:80"
+    depends_on:
+      - php
+
+  php:
+    container_name: curriculum-laravel
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    volumes:
+      - ./app:/var/www/html
+
+  db:
+    container_name: curriculum-db
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: laravel_db
+    volumes:
+      - ./db:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: curriculum-phpmyadmin
+    links:
+      - db
+    ports:
+      - 4040:80
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root      
