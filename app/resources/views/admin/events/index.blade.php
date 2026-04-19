@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'PATCH',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'X-Requested-With': 'XMLHttpRequest', // これが request()->ajax() の判定に使われます
+                    'X-Requested-With': 'XMLHttpRequest', 
                     'Accept': 'application/json'
                 }
             })

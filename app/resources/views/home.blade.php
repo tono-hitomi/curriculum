@@ -76,7 +76,7 @@
                                             <a href="{{ route('events.show', $event->id) }}" class="btn btn-sm btn-info text-white px-3 shadow-sm mr-2">詳細</a>
 
                                             @auth
-                                                {{-- Ajax用にbuttonタグへ変更。data-idを付与しています --}}
+                                                {{-- Ajax用にbuttonタグへ変更。data-idを付与 --}}
                                                 <button type="button" 
                                                         class="ajax-bookmark-btn" 
                                                         data-id="{{ $event->id }}"

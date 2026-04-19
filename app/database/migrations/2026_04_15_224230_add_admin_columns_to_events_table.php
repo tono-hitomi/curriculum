@@ -14,7 +14,7 @@ class AddAdminColumnsToEventsTable extends Migration
     public function up()
     {
         Schema::table('events', function (Blueprint $table) {
-            // is_visibleはすでにあるので、report_countだけを追加します
+            
             $table->integer('report_count')->default(0)->after('type');
         });
     }

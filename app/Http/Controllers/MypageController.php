@@ -19,7 +19,6 @@ class MypageController extends Controller
         $user = Auth::user();
 
         // 参加・主催・ブックマークのデータを取得
-        // ※リレーション名が違うと後でエラーが出るかもしれませんが、まずはこれで進めます
         $participatingEvents = $user->participatingEvents()->get();
         $myEvents = $user->events()->get();
         $bookmarkedEvents = $user->bookmarkedEvents()->get();
@@ -86,18 +85,18 @@ public function deleteAccount(Request $request)
 {
     $user = Auth::user();
 
-    // 1. バリデーション（入力チェック）
+    // バリデーション（入力チェック）
     $request->validate([
         'name' => 'required',
         'password' => 'required',
     ]);
 
-    // 2. ユーザー名とパスワードの照合
+    // ユーザー名とパスワードの照合
     if ($request->name !== $user->name || !Hash::check($request->password, $user->password)) {
         return back()->with('error', 'ユーザー名またはパスワードが正しくありません。');
     }
 
-    // 3. データの削除
+    // データの削除
     // ※画像がある場合は削除しておくとストレージが節約できます
     if ($user->image) {
         Storage::delete('public/profile_images/' . $user->image);
@@ -105,7 +104,7 @@ public function deleteAccount(Request $request)
 
     $user->delete();
 
-    // 4. ログアウトさせてリダイレクト
+    //  ログアウトさせてリダイレクト
     Auth::logout();
     return redirect('/')->with('status', '退会手続きが完了しました。ご利用ありがとうございました。');
 }

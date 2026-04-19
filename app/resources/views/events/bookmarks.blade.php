@@ -18,7 +18,7 @@
                     <span class="text-primary">{{ $event->user->name }}</span>
                 </div>
 
-                {{-- ③ 削除ボタン --}}
+                {{-- 削除ボタン --}}
                 <form action="{{ route('bookmarks.destroy', $event->id) }}" method="POST" onsubmit="return confirm('削除しますか？');">
                     @csrf
                     @method('DELETE')
@@ -27,12 +27,12 @@
             </div>
         @endforeach
 
-        {{-- ① ページ番号 --}}
+        {{-- ページ番号 --}}
         <div class="d-flex justify-content-center mt-4">
             {{ $bookmarkedEvents->links() }}
         </div>
 
-        {{-- ② マイページへ戻るリンク --}}
+        {{-- マイページへ戻るリンク --}}
         <div class="text-center mt-4">
             <a href="{{ route('mypage') }}" class="text-dark" style="text-decoration: underline;">マイページへ</a>
         </div>

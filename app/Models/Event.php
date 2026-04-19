@@ -10,7 +10,7 @@ class Event extends Model
     protected $fillable = [
         'user_id', 
         'title', 
-        'comment',      // EventControllerの保存処理に合わせて description から comment に修正
+        'comment',      
         'image', 
         'capacity', 
         'date', 
@@ -25,7 +25,7 @@ class Event extends Model
      */
     public function user()
     {
-        // フォルダ移動後の App\Models\User を参照するように修正
+        // フォルダ移動後の App\Models\User を参照
         return $this->belongsTo(User::class);
     }
 

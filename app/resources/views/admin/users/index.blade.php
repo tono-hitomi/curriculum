@@ -55,7 +55,7 @@
 </div>
 
 <style>
-    /* 共通デザインのための微調整 */
+    /* 共通デザイン */
     .table th { font-size: 0.9rem; }
     .text-start { text-align: left !important; }
     .breadcrumb-item + .breadcrumb-item::before { content: ">"; }

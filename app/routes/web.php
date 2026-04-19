@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-// コントローラーを正しくインポート
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\Admin\AdminController;
 
@@ -18,39 +17,39 @@ Auth::routes();
 // --- ログイン必須のグループ ---
 Route::middleware(['auth'])->group(function () {
 
-    // 1. トップページ（イベント一覧）
+    // トップページ（イベント一覧）
     Route::get('/', [EventController::class, 'index'])->name('home');
     Route::get('/home', [EventController::class, 'index']);
 
-    // 2. イベント基本管理 (ResourceController)
+    // イベント基本管理 (ResourceController)
     // これにより index, create, store, show, edit, update, destroy が自動生成されます
     Route::resource('events', EventController::class);
 
-    // 3. マイページ・プロフィール関連
+    // マイページ・プロフィール関連
     Route::get('/mypage', [EventController::class, 'mypage'])->name('mypage');
     Route::get('/profile', [EventController::class, 'profile'])->name('profile');
     Route::get('/profile/edit', [EventController::class, 'editProfile'])->name('profile.edit');
     Route::post('/profile/update', [EventController::class, 'updateProfile'])->name('profile.update');
     
-    // 4. 退会処理
+    // 退会処理
     Route::get('/profile/delete', [EventController::class, 'confirmDelete'])->name('profile.delete.confirm');
     Route::delete('/profile/delete', [EventController::class, 'deleteAccount'])->name('profile.delete');
 
-    // 5. ブックマーク（お気に入り）関連
+    // ブックマーク（お気に入り）関連
     Route::get('/bookmarks', [EventController::class, 'bookmarkIndex'])->name('bookmarks.index');
     Route::post('/events/{event}/bookmark', [EventController::class, 'bookmark'])->name('events.bookmark');
     Route::delete('/bookmarks/{event}', [EventController::class, 'unbookmark'])->name('bookmarks.destroy');
 
-    // 6. イベント参加申込
+    // イベント参加申込
     Route::get('/events/{event}/apply', [EventController::class, 'apply'])->name('events.apply');
     Route::post('/events/{event}/apply', [EventController::class, 'storeApplication'])->name('events.apply.store');
     Route::post('/events/{event}/cancel', [EventController::class, 'cancel'])->name('events.cancel');
 
-    // 7. 違反報告
+    //  違反報告
     Route::get('/events/{event}/report', [EventController::class, 'report'])->name('events.report');
     Route::post('/events/{event}/report', [EventController::class, 'storeReport'])->name('events.report.store');
 
-    // --- 8. 管理者専用画面グループ ---
+    // ---  管理者専用画面グループ ---
     Route::prefix('admin')->middleware(['can:admin'])->name('admin.')->group(function () {
         // 管理者メイン画面
         Route::get('/', [AdminController::class, 'index'])->name('index');

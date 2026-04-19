@@ -91,7 +91,6 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center font-weight-bold">
                     <span><i class="fas fa-star text-warning"></i> ブックマーク</span>
-                    {{-- ★ここに追加しました --}}
                     <a href="{{ route('bookmarks.index') }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">
                         一覧へ
                     </a>
