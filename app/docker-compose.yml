@@ -6,7 +6,7 @@ services:
     image: nginx:latest
     volumes:
       - ./docker/nginx:/etc/nginx/conf.d
-      - ./app:/var/www/html
+      - .:/var/www/html
     ports:
       - "80:80"
     depends_on:
@@ -18,7 +18,7 @@ services:
       context: .
       dockerfile: ./docker/php/Dockerfile
     volumes:
-      - ./app:/var/www/html
+      - .:/var/www/html
 
   db:
     container_name: curriculum-db

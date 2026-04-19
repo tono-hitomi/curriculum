@@ -21,7 +21,14 @@
     <div class="row">
         {{-- 左側：メインエリア（参加・主催イベント） --}}
         <div class="col-md-8">
-            {{-- 参加イベント一覧：カードに少し余白と影を追加 --}}
+            {{-- 成功メッセージの表示 --}}
+            @if (session('status'))
+                <div class="alert alert-success shadow-sm mb-4" role="alert">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            {{-- 参加イベント一覧 --}}
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white font-weight-bold">
                     <i class="fas fa-calendar-check text-primary"></i> 参加予定のイベント
@@ -61,7 +68,7 @@
 
         {{-- 右側：サイドバー（統計・ブックマーク） --}}
         <div class="col-md-4">
-            {{-- 簡易統計：数値を強調 --}}
+            {{-- 簡易統計 --}}
             <div class="card shadow-sm mb-4 border-0">
                 <div class="card-header bg-dark text-white font-weight-bold">
                     活動状況
@@ -82,8 +89,12 @@
 
             {{-- ブックマーク一覧 --}}
             <div class="card shadow-sm">
-                <div class="card-header bg-white font-weight-bold">
-                    <i class="fas fa-star text-warning"></i> ブックマーク
+                <div class="card-header bg-white d-flex justify-content-between align-items-center font-weight-bold">
+                    <span><i class="fas fa-star text-warning"></i> ブックマーク</span>
+                    {{-- ★ここに追加しました --}}
+                    <a href="{{ route('bookmarks.index') }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">
+                        一覧へ
+                    </a>
                 </div>
                 <ul class="list-group list-group-flush">
                     @forelse($bookmarkedEvents as $event)

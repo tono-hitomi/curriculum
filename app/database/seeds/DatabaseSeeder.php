@@ -9,11 +9,8 @@ class DatabaseSeeder extends Seeder
      *
      * @return void
      */
-public function run()
-{
-    // 他のシーダーを呼び出す
-    $this->call([
-        UserSeeder::class,
-        EventSeeder::class,
-    ]);
-}}
+    public function run()
+    {
+        // $this->call(UsersTableSeeder::class);
+    }
+}
