@@ -1,0 +1,1 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>管理者画面</title></head><body><div style="padding:50px; font-family:sans-serif;"><h1>管理者専用パネル</h1><p>表示成功です！おめでとうございます！</p><hr><a href="/home">一般画面へ戻る</a></div></body></html>

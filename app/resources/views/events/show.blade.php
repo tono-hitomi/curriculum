@@ -9,9 +9,14 @@
     <div class="row justify-content-center">
         <div class="col-md-10"> 
             
-            {{-- ステータスメッセージ --}}
+            {{-- ステータスメッセージ（成功時） --}}
             @if (session('status'))
                 <div class="alert alert-success shadow-sm mb-4">{{ session('status') }}</div>
+            @endif
+
+            {{-- エラーメッセージ（定員オーバー・既に応募済など） --}}
+            @if (session('error'))
+                <div class="alert alert-danger shadow-sm mb-4">{{ session('error') }}</div>
             @endif
 
             <div class="card shadow-sm p-4 border-0">
@@ -49,6 +54,14 @@
                                 @endif
                             </div>
                         </div>
+                        {{-- 定員数の表示（追加） --}}
+                        <div class="mt-3 text-right">
+                            <span class="font-weight-bold text-muted">現在の参加人数: </span>
+                            <span class="h5 font-weight-bold">{{ $event->users->count() }}</span>
+                            @if(!is_null($event->capacity))
+                                <span class="text-muted"> / {{ $event->capacity }} 名</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
 
@@ -85,10 +98,19 @@
                                 </button>
                             </form>
                         @else
-                            {{-- まだ参加していない場合：申込入力画面（apply）へ遷移 --}}
-                            <a href="{{ route('events.apply', $event->id) }}" class="btn btn-primary btn-lg px-5 shadow-sm">
-                                参加を申し込む
-                            </a>
+                            {{-- まだ参加していない場合 --}}
+                            @if(!is_null($event->capacity) && $event->users->count() >= $event->capacity)
+                                {{-- 定員に達している場合 --}}
+                                <button class="btn btn-secondary btn-lg px-5 shadow-sm" disabled style="cursor: not-allowed;">
+                                    定員に達しました
+                                </button>
+                                <p class="text-danger small mt-2">※キャンセルが出るまで申し込みはできません</p>
+                            @else
+                                {{-- 申し込み可能 --}}
+                                <a href="{{ route('events.apply', $event->id) }}" class="btn btn-primary btn-lg px-5 shadow-sm">
+                                    参加を申し込む
+                                </a>
+                            @endif
                         @endif
                     @endif
 

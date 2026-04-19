@@ -25,8 +25,7 @@ class EventController extends Controller
      */
     public function index(Request $request)
     {
-        // is_visible が 1 のものだけを取得
-        $query = Event::with('user')->where('is_visible', 1);
+        $query = Event::with('user');
 
         if ($request->filled('keyword')) {
             $keyword = '%' . $request->keyword . '%';
@@ -58,28 +57,26 @@ class EventController extends Controller
     }
 
     /**
-     * 保存処理
+     * 保存処理 (マイページへ遷移)
      */
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'title' => 'required|max:255',
+            'description' => 'required',
+            'date' => 'required|date|after:now', 
+            'format' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048', 
+            'capacity' => 'nullable|integer|min:1',
         ]);
 
         $event = new Event();
+        $event->user_id = Auth::id(); 
         $event->title = $request->title;
-        $event->comment = $request->description;
-        $event->user_id = Auth::id();
-        
-        // --- 修正ポイント：新規作成時はデフォルトで「表示(1)」に設定 ---
-        $event->is_visible = 1; 
-        
-        $event->capacity = 0; 
-        $event->date = now(); 
-        $event->format = 0; 
-        $event->type = 0; 
+        $event->comment = $request->description; 
+        $event->date = $request->date;
+        $event->format = $request->format;
+        $event->capacity = $request->capacity;
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('public/event_images');
@@ -88,7 +85,7 @@ class EventController extends Controller
 
         $event->save();
 
-        return redirect()->route('mypage')->with('status', 'イベントを作成しました！');
+        return redirect()->route('mypage')->with('status', 'イベントを公開しました！');
     }
 
     /**
@@ -124,10 +121,16 @@ class EventController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'date' => 'required|date',
+            'format' => 'required|string',
+            'capacity' => 'nullable|integer|min:1',
         ]);
 
         $event->title = $request->title;
         $event->comment = $request->description;
+        $event->date = $request->date;
+        $event->format = $request->format;
+        $event->capacity = $request->capacity;
 
         if ($request->hasFile('image')) {
             if ($event->image) {
@@ -160,7 +163,7 @@ class EventController extends Controller
         return redirect()->route('mypage')->with('status', 'イベントを削除しました。');
     }
 
-    /* --- ブックマーク関連 (Ajax対応) --- */
+    /* --- その他 (ブックマーク、マイページ、参加、報告) --- */
 
     public function bookmarkIndex()
     {
@@ -172,7 +175,6 @@ class EventController extends Controller
     public function bookmark(Event $event)
     {
         $user = Auth::user();
-        
         if ($user->bookmarks()->where('event_id', $event->id)->exists()) {
             $user->bookmarks()->detach($event->id);
             $status = 'unbookmarked';
@@ -180,26 +182,14 @@ class EventController extends Controller
             $user->bookmarks()->attach($event->id);
             $status = 'bookmarked';
         }
-
-        if (request()->ajax()) {
-            return response()->json(['status' => $status]);
-        }
-
-        return back();
+        return request()->ajax() ? response()->json(['status' => $status]) : back();
     }
 
     public function unbookmark(Event $event)
     {
         Auth::user()->bookmarks()->detach($event->id);
-
-        if (request()->ajax()) {
-            return response()->json(['status' => 'unbookmarked']);
-        }
-
-        return back()->with('status', 'ブックマークを解除しました。');
+        return request()->ajax() ? response()->json(['status' => 'unbookmarked']) : back()->with('status', '解除完了');
     }
-
-    /* --- ユーザー・マイページ関連 --- */
 
     public function mypage()
     {
@@ -242,7 +232,7 @@ class EventController extends Controller
         }
 
         $user->update($data);
-        return redirect()->route('profile')->with('status', 'プロフィールを更新しました！');
+        return redirect()->route('profile')->with('status', 'プロフィール更新完了');
     }
 
     public function confirmDelete()
@@ -254,17 +244,13 @@ class EventController extends Controller
     {
         $user = Auth::user();
         $request->validate(['password' => 'required']);
-
         if (!Hash::check($request->password, $user->password)) {
-            return back()->with('error', 'パスワードが正しくありません。');
+            return back()->with('error', 'パスワードが違います');
         }
-        
         $user->delete();
         Auth::logout();
-        return redirect('/')->with('status', '退会手続きが完了しました。');
+        return redirect('/')->with('status', '退会しました');
     }
-
-    /* --- 参加申込関連 --- */
 
     public function apply(Event $event)
     {
@@ -274,25 +260,32 @@ class EventController extends Controller
 
     public function storeApplication(Request $request, Event $event)
     {
-        $request->validate([
-            'comment' => 'required|string|max:1000',
-        ]);
+        $request->validate(['comment' => 'required|string|max:1000']);
 
-        if (!$event->users()->where('user_id', Auth::id())->exists()) {
-            $event->users()->attach(Auth::id(), [
-                'comment' => $request->comment
-            ]);
+        // すでに応募済みでないか確認
+        if ($event->users()->where('user_id', Auth::id())->exists()) {
+            return redirect()->route('events.show', $event->id)->with('error', '既に応募済みです。');
         }
-        return redirect()->route('events.show', $event->id)->with('status', 'イベントへの参加を申し込みました！');
+
+        // 定員チェック (capacityが設定されている場合のみ)
+        if (!is_null($event->capacity)) {
+            $count = $event->users()->count();
+            if ($count >= $event->capacity) {
+                return redirect()->route('events.show', $event->id)->with('error', '定員に達したため申し込みできません。');
+            }
+        }
+
+        // 登録処理
+        $event->users()->attach(Auth::id(), ['comment' => $request->comment]);
+
+        return redirect()->route('events.show', $event->id)->with('status', '参加申込完了');
     }
 
     public function cancel(Event $event)
     {
         $event->users()->detach(Auth::id());
-        return back()->with('status', '参加申込をキャンセルしました。');
+        return back()->with('status', 'キャンセルしました');
     }
-
-    /* --- 違反報告関連 --- */
 
     public function report(Event $event)
     {
@@ -302,19 +295,14 @@ class EventController extends Controller
 
     public function storeReport(Request $request, Event $event)
     {
-        $request->validate([
-            'report_comment' => 'required|string|max:1000',
-        ]);
-
+        $request->validate(['report_comment' => 'required|string|max:1000']);
         Report::create([
             'user_id' => Auth::id(),
             'event_id' => $event->id,
             'title' => $event->title,
             'content' => $request->report_comment,
         ]);
-
         $event->increment('report_count');
-
-        return redirect()->route('home')->with('status', '違反報告を送信しました。');
+        return redirect()->route('home')->with('status', '報告しました');
     }
 }

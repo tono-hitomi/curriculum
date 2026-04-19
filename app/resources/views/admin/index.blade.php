@@ -84,9 +84,16 @@
                     </table>
                 </div>
                 <div class="card-footer bg-white text-center">
-                    <a href="{{ route('admin.events.index') }}" class="btn btn-secondary btn-sm shadow-sm">
-                        全イベントを表示
-                    </a>
+                    <div class="d-grid gap-2">
+                        {{-- 違反報告一覧へのリンク --}}
+                        <a href="{{ route('admin.reports.index') }}" class="btn btn-danger btn-sm shadow-sm mb-2 w-100">
+                            <i class="fas fa-exclamation-triangle"></i> 違反報告一覧を確認する
+                        </a>
+                        {{-- 全イベント管理へのリンク --}}
+                        <a href="{{ route('admin.events.index') }}" class="btn btn-secondary btn-sm shadow-sm w-100">
+                            全イベントを表示
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,7 +125,6 @@
                         </tbody>
                     </table>
                 </div>
-                {{-- 参加申込には下部のボタンがないためfooterは省略 --}}
             </div>
         </div>
     </div>

@@ -14,7 +14,7 @@ class CreateReportsTable extends Migration
 public function up()
 {
     Schema::create('reports', function (Blueprint $table) {
-        $table->increments('lid'); // レポートid
+        $table->increments('id'); // レポートid
         $table->integer('user_id'); // ユーザid
         $table->integer('event_id'); // イベントid
         $table->string('title', 255); // タイトル

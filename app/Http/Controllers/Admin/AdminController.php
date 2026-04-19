@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Event;
+use App\Models\Report;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -111,11 +112,9 @@ class AdminController extends Controller
      * 表示状態切り替え（Ajax対応）
      */
     public function toggleVisible(Event $event) {
-        // 現在の状態を反転
         $event->is_visible = !$event->is_visible;
         $event->save();
 
-        // Ajaxリクエストの場合はJSONを返す
         if (request()->ajax()) {
             return response()->json([
                 'success' => true,
@@ -123,7 +122,6 @@ class AdminController extends Controller
             ]);
         }
 
-        // 通常のフォーム送信の場合は前の画面に戻る（互換性維持）
         return back()->with('status', '表示状態を更新しました');
     }
 
@@ -139,5 +137,33 @@ class AdminController extends Controller
     public function suspend(User $user) {
         $user->delete();
         return redirect()->route('admin.users.index')->with('status', 'ユーザーを利用停止にしました。');
+    }
+
+    /**
+     * 違反報告一覧
+     */
+    public function reportIndex()
+    {
+        $reports = Report::with(['user', 'event'])->latest()->paginate(10);
+        return view('admin.reports.index', compact('reports'));
+    }
+
+    /**
+     * 違反報告の削除（棄却）
+     */
+    public function reportDestroy($id)
+    {
+        // カラム名を id に戻したので、標準の findOrFail で確実に動作します
+        $report = Report::findOrFail($id);
+
+        // イベント側の報告数カウントを減らす
+        if ($report->event) {
+            $report->event->decrement('report_count');
+        }
+
+        $report->delete();
+
+        // 削除後は「違反報告一覧」へリダイレクト
+        return redirect('/admin/reports')->with('status', '違反報告を削除（棄却）しました。');
     }
 }
