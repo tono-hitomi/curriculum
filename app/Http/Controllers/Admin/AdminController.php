@@ -15,30 +15,39 @@ class AdminController extends Controller
     /**
      * 管理者画面のメイン表示
      */
-    public function index()
-    {
-        $users = User::withCount([
-            'participatingEvents as applications_count', 
-            'events as events_count'
-        ])->get();
+public function index()
+{
+    // ユーザー一覧はそのまま（停止済みもカウントに含めるならそのままでOK）
+    $users = User::withCount([
+        'participatingEvents as applications_count', 
+        'events as events_count'
+    ])->get();
 
-        $events = Event::orderBy('report_count', 'desc')->take(10)->get();
+    // ★修正：主催者が削除されていないイベントのみ取得
+    $events = Event::whereHas('user')
+        ->orderBy('report_count', 'desc')
+        ->take(10)
+        ->get();
 
-        $applications = DB::table('event_user')
-            ->join('users', 'event_user.user_id', '=', 'users.id')
-            ->join('events', 'event_user.event_id', '=', 'events.id')
-            ->select('users.name', 'users.email', 'events.title')
-            ->get()
-            ->map(function($item) {
-                return (object)[
-                    'user' => (object)['name' => $item->name, 'email' => $item->email],
-                    'event' => (object)['title' => $item->title]
-                ];
-            });
-        
-        return view("admin.index", compact("users", "events", "applications"));
-    }
-
+    // ★修正：主催者または申込者が削除されていない参加申込のみ取得
+    $applications = DB::table('event_user')
+        ->join('users', 'event_user.user_id', '=', 'users.id')
+        ->join('events', 'event_user.event_id', '=', 'events.id')
+        // 主催者のユーザーも結合してチェック
+        ->join('users as owners', 'events.user_id', '=', 'owners.id') 
+        ->select('users.name', 'users.email', 'events.title')
+        ->whereNull('users.deleted_at')   // 申込者が停止されていない
+        ->whereNull('owners.deleted_at')  // 主催者が停止されていない
+        ->get()
+        ->map(function($item) {
+            return (object)[
+                'user' => (object)['name' => $item->name, 'email' => $item->email],
+                'event' => (object)['title' => $item->title]
+            ];
+        });
+    
+    return view("admin.index", compact("users", "events", "applications"));
+}
     /**
      * ユーザー一覧CSVエクスポート
      */
@@ -103,11 +112,14 @@ class AdminController extends Controller
 
     // --- 管理画面詳細機能 ---
 
-    public function eventList() {
-        $events = Event::orderBy('id', 'desc')->paginate(20);
-        return view('admin.events.index', compact('events'));
-    }
-
+public function eventList() {
+    // ★修正：主催者が存在するイベントのみ
+    $events = Event::whereHas('user')
+        ->orderBy('id', 'desc')
+        ->paginate(20);
+        
+    return view('admin.events.index', compact('events'));
+}
     /**
      * 表示状態切り替え（Ajax対応）
      */

@@ -16,13 +16,13 @@
             @foreach($events as $event)
             <tr>
                 <td class="text-left">
-                    <a href="{{ route('events.show', $event) }}" class="text-primary">
+                    {{-- 詳細へのリンクに ?from=admin_events を追加 --}}
+                    <a href="{{ route('events.show', $event) }}?from=admin_events" class="text-primary font-weight-bold">
                         {{ $event->title }}
                     </a>
                 </td>
                 <td>{{ $event->report_count }}件</td>
                 <td>
-                    {{-- classを追加し、JavaScriptで扱いやすいように data-id を付与しています --}}
                     <button type="button" 
                         class="btn {{ $event->is_visible ? 'btn-warning' : 'btn-success' }} btn-sm toggle-visible-btn" 
                         data-id="{{ $event->id }}"
@@ -42,13 +42,14 @@
 
     {{-- メインへ戻る --}}
     <div class="text-right mt-3">
-        <a href="{{ route('admin.index') }}" class="btn btn-outline-secondary">メインへ</a>
+        <a href="{{ route('admin.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-home"></i> メインへ
+        </a>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // 全ての切り替えボタンを取得
     const buttons = document.querySelectorAll('.toggle-visible-btn');
 
     buttons.forEach(button => {
@@ -56,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const eventId = this.dataset.id;
             const url = `/admin/events/${eventId}/toggle-visible`;
 
-            // ボタンを一時的に無効化（連続クリック防止）
             this.disabled = true;
 
             fetch(url, {
@@ -73,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 if (data.success) {
-                    // 状態に応じてボタンの見た目を更新
                     if (data.is_visible) {
                         this.classList.remove('btn-success');
                         this.classList.add('btn-warning');
@@ -89,7 +88,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert(error.message);
             })
             .finally(() => {
-                // ボタンを再度有効化
                 this.disabled = false;
             });
         });

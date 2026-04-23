@@ -30,8 +30,11 @@
                         <div class="form-group mb-2">
                             <select name="format" class="form-control mr-2">
                                 <option value="">配信形式を選択</option>
-                                <option value="0" {{ request('format') === '0' ? 'selected' : '' }}>Zoom</option>
-                                <option value="1" {{ request('format') === '1' ? 'selected' : '' }}>YouTube</option>
+                                {{-- valueを数値(0,1..)から文字列(Zoom, YouTube..)に変更 --}}
+                                <option value="Zoom" {{ request('format') === 'Zoom' ? 'selected' : '' }}>Zoom</option>
+                                <option value="YouTube" {{ request('format') === 'YouTube' ? 'selected' : '' }}>YouTube</option>
+                                <option value="対面" {{ request('format') === '対面' ? 'selected' : '' }}>対面</option>
+                                <option value="その他" {{ request('format') === 'その他' ? 'selected' : '' }}>その他</option>
                             </select>
                         </div>
 
@@ -57,44 +60,65 @@
                         <table class="table table-hover mb-0">
                             <thead class="bg-light text-muted">
                                 <tr>
-                                    <th style="width: 35%" class="border-top-0 pl-4">イベント名</th>
-                                    <th style="width: 35%" class="border-top-0 text-center">主催者</th>
-                                    <th style="width: 30%" class="border-top-0 text-right pr-4">アクション</th>
+                                    <th style="width: 40%" class="border-top-0 pl-4">イベント内容</th>
+                                    <th style="width: 20%" class="border-top-0 text-center">主催者</th>
+                                    <th style="width: 20%" class="border-top-0 text-center">定員状況</th>
+                                    <th style="width: 20%" class="border-top-0 text-right pr-4">アクション</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($events as $event)
                                     <tr>
                                         <td class="align-middle pl-4">
-                                            <div class="font-weight-bold text-primary">{{ $event->title }}</div>
-                                            <small class="text-muted"><i class="far fa-calendar-alt"></i> {{ \Carbon\Carbon::parse($event->date)->format('Y/m/d') }}</small>
+                                            {{-- 文字列によるバッジ表示の出し分け --}}
+                                            @if($event->format === 'Zoom')
+                                                <span class="badge badge-info mb-1 text-white">Zoom</span>
+                                            @elseif($event->format === 'YouTube')
+                                                <span class="badge badge-danger mb-1">YouTube</span>
+                                            @elseif($event->format === '対面')
+                                                <span class="badge badge-success mb-1">対面</span>
+                                            @else
+                                                <span class="badge badge-secondary mb-1">その他</span>
+                                            @endif
+                                            
+                                            <div class="font-weight-bold text-primary h6 mb-1">{{ $event->title }}</div>
+                                            <small class="text-muted">
+                                                <i class="far fa-calendar-alt"></i> {{ \Carbon\Carbon::parse($event->date)->format('Y/m/d') }}
+                                            </small>
                                         </td>
-                                        <td class="align-middle text-center text-muted">
+                                        <td class="align-middle text-center text-muted small">
                                             <i class="far fa-user-circle"></i> {{ $event->user->name ?? '不明' }}
                                         </td>
+                                        <td class="align-middle text-center">
+                                            <span class="font-weight-bold {{ (!is_null($event->capacity) && $event->users->count() >= $event->capacity) ? 'text-danger' : 'text-dark' }}">
+                                                {{ $event->users->count() }}
+                                            </span>
+                                            <span class="text-muted small"> / {{ $event->capacity ?? '∞' }} 名</span>
+                                        </td>
                                         <td class="align-middle text-right pr-4">
-                                            <a href="{{ route('events.show', $event->id) }}" class="btn btn-sm btn-info text-white px-3 shadow-sm mr-2">詳細</a>
+                                            <div class="d-flex justify-content-end align-items-center">
+                                                <a href="{{ route('events.show', $event->id) }}" class="btn btn-sm btn-info text-white px-3 shadow-sm mr-2">詳細</a>
 
-                                            @auth
-                                                {{-- Ajax用にbuttonタグへ変更。data-idを付与 --}}
-                                                <button type="button" 
-                                                        class="ajax-bookmark-btn" 
-                                                        data-id="{{ $event->id }}"
-                                                        style="border: none; background: none; outline: none; transition: transform 0.2s; padding: 0;">
-                                                    @if(Auth::user()->bookmarks()->where('event_id', $event->id)->exists())
-                                                        <span class="star-icon" style="color: #f1c40f; font-size: 1.3rem;">★</span>
-                                                    @else
-                                                        <span class="star-icon" style="color: #ccc; font-size: 1.3rem;">☆</span>
-                                                    @endif
-                                                </button>
-                                            @else
-                                                <span style="color: #ccc; font-size: 1.3rem; opacity: 0.5;">☆</span>
-                                            @endauth
+                                                @auth
+                                                    <button type="button" 
+                                                            class="ajax-bookmark-btn" 
+                                                            data-id="{{ $event->id }}"
+                                                            style="border: none; background: none; outline: none; transition: transform 0.2s; padding: 0;">
+                                                        @if(Auth::user()->bookmarks()->where('event_id', $event->id)->exists())
+                                                            <span class="star-icon" style="color: #f1c40f; font-size: 1.3rem;">★</span>
+                                                        @else
+                                                            <span class="star-icon" style="color: #ccc; font-size: 1.3rem;">☆</span>
+                                                        @endif
+                                                    </button>
+                                                @else
+                                                    <span style="color: #ccc; font-size: 1.3rem; opacity: 0.5;">☆</span>
+                                                @endauth
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="3" class="text-center py-5 text-muted">
+                                        <td colspan="4" class="text-center py-5 text-muted">
                                             <i class="fas fa-calendar-times fa-3x mb-3 d-block opacity-50"></i>
                                             該当するイベントは見つかりませんでした。
                                         </td>
@@ -116,6 +140,7 @@
     .ajax-bookmark-btn:hover { transform: scale(1.3); cursor: pointer; }
     .btn-info { background-color: #17a2b8; border: none; }
     .btn-info:hover { background-color: #138496; }
+    .badge { font-weight: 500; padding: 0.4em 0.6em; min-width: 70px; text-align: center; }
 </style>
 
 <script>
@@ -128,7 +153,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const starIcon = this.querySelector('.star-icon');
             const url = `/events/${eventId}/bookmark`;
 
-            // ボタンを無効化して連打防止
             this.style.pointerEvents = 'none';
 
             fetch(url, {
@@ -144,7 +168,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                // コントローラーが返したステータスに応じて見た目を切り替え
                 if (data.status === 'bookmarked') {
                     starIcon.textContent = '★';
                     starIcon.style.color = '#f1c40f';
@@ -157,7 +180,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
             })
             .finally(() => {
-                // ボタンを再度有効化
                 this.style.pointerEvents = 'auto';
             });
         });

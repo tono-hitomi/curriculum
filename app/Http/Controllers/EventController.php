@@ -23,31 +23,31 @@ class EventController extends Controller
     /**
      * イベント一覧 (Resource: index)
      */
-    public function index(Request $request)
-    {
-        $query = Event::with('user');
+public function index(Request $request)
+{
+    // 主催者情報と一緒に取得し、かつ「主催者が削除されていない（存在する）」ものだけに絞り込む
+    $query = Event::with('user')->whereHas('user'); 
 
-        if ($request->filled('keyword')) {
-            $keyword = '%' . $request->keyword . '%';
-            $query->where(function($q) use ($keyword) {
-                $q->where('title', 'like', $keyword)
-                  ->orWhere('comment', 'like', $keyword);
-            });
-        }
-
-        if ($request->filled('date')) {
-            $query->whereDate('date', $request->date);
-        }
-
-        if ($request->filled('format')) {
-            $query->where('format', $request->format);
-        }
-
-        $events = $query->latest()->get();
-        
-        return view('home', compact('events'));
+    if ($request->filled('keyword')) {
+        $keyword = '%' . $request->keyword . '%';
+        $query->where(function($q) use ($keyword) {
+            $q->where('title', 'like', $keyword)
+              ->orWhere('comment', 'like', $keyword);
+        });
     }
 
+    if ($request->filled('date')) {
+        $query->whereDate('date', $request->date);
+    }
+
+    if ($request->filled('format')) {
+        $query->where('format', $request->format);
+    }
+
+    $events = $query->latest()->get();
+    
+    return view('home', compact('events'));
+}
     /**
      * 新規作成画面
      */
@@ -65,7 +65,7 @@ class EventController extends Controller
             'title' => 'required|max:255',
             'description' => 'required',
             'date' => 'required|date|after:now', 
-            'format' => 'required|string',
+            'format' => 'required|string', // 文字列としてバリデーション
             'image' => 'required|image|mimes:jpeg,png,jpg|max:2048', 
             'capacity' => 'nullable|integer|min:1',
         ]);
@@ -75,7 +75,10 @@ class EventController extends Controller
         $event->title = $request->title;
         $event->comment = $request->description; 
         $event->date = $request->date;
+        
+        // formatカラムに文字列（Zoom, 対面など）を直接保存
         $event->format = $request->format;
+        
         $event->capacity = $request->capacity;
 
         if ($request->hasFile('image')) {
@@ -93,6 +96,10 @@ class EventController extends Controller
      */
     public function show(Event $event)
     {
+        if (!$event->user || $event->user->trashed()) {
+        // 「このイベントは削除されました」という専用ビューを表示するか、404エラーを出す
+        return response()->view('errors.event_deleted', [], 404);
+    }
         $event->load(['user', 'users']);
         return view('events.show', compact('event'));
     }
@@ -129,7 +136,7 @@ class EventController extends Controller
         $event->title = $request->title;
         $event->comment = $request->description;
         $event->date = $request->date;
-        $event->format = $request->format;
+        $event->format = $request->format; // 更新時も同様
         $event->capacity = $request->capacity;
 
         if ($request->hasFile('image')) {
