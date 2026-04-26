@@ -41,7 +41,6 @@
                             <label class="font-weight-bold">イベント形式 <span class="badge bg-danger text-white">必須</span></label>
                             <select name="format" class="form-control @error('format') is-invalid @enderror" required>
                                 <option value="">選択してください</option>
-                                {{-- データベースの文字列保存に合わせてvalueを設定 --}}
                                 <option value="Zoom" {{ old('format') == 'Zoom' ? 'selected' : '' }}>Zoom</option>
                                 <option value="YouTube" {{ old('format') == 'YouTube' ? 'selected' : '' }}>YouTube</option>
                                 <option value="対面" {{ old('format') == '対面' ? 'selected' : '' }}>対面</option>
@@ -84,7 +83,7 @@
                                 @enderror
                                 <small class="text-muted mt-3">推奨：正方形または横長画像</small>
                                 
-                                {{-- プレビュー表示用エリア（任意） --}}
+                                {{-- プレビュー表示用エリア --}}
                                 <div id="imagePreview" class="mt-3 w-100 px-4" style="display:none;">
                                     <img id="previewImg" src="" alt="Preview" style="max-width: 100%; height: auto; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 </div>
@@ -106,7 +105,6 @@
 </div>
 
 <script>
-// 画像を選択した際に簡易的なプレビューを表示するスクリプト
 document.getElementById('imageInput').addEventListener('change', function(e) {
     const reader = new FileReader();
     const preview = document.getElementById('imagePreview');

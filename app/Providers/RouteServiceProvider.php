@@ -9,7 +9,6 @@ class RouteServiceProvider extends ServiceProvider
 {
     /**
      * This namespace is applied to your controller routes.
-     * 二重の住所問題を防ぐため、ここを null にするかコメントアウトします。
      *
      * @var string|null
      */

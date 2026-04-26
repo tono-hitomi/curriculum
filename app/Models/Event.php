@@ -25,7 +25,6 @@ class Event extends Model
      */
     public function user()
     {
-        // フォルダ移動後の App\Models\User を参照
         return $this->belongsTo(User::class);
     }
 

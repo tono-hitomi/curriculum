@@ -119,16 +119,16 @@
                 <hr class="my-4">
 
                 <div class="text-center">
-                    {{-- 1. 管理者の場合 --}}
+                    {{-- 管理者の場合 --}}
                     @if(Auth::user()->is_admin == 1)
                         <div class="alert alert-info py-3 border-0 shadow-sm">
                             <i class="fas fa-user-shield"></i> 管理者として詳細を閲覧中です
                         </div>
 
-                    {{-- 2. 自分が主催者の場合 --}}
+                    {{-- 自分が主催者の場合 --}}
                     @elseif($event->user_id === Auth::id())
-                        <div class="alert alert-secondary py-4 shadow-sm border-0">
-                            <p class="font-weight-bold mb-3 text-dark"><i class="fas fa-user-shield text-primary"></i> あなたはこのイベントの主催者です</p>
+                        <div class="alert alert-secondary py-4 shadow-sm border-0 mb-4">
+                            <p class="font-weight-bold mb-3 text-dark"><i class="fas fa-user-check text-primary"></i> あなたはこのイベントの主催者です</p>
                             <div class="d-flex justify-content-center">
                                 <a href="{{ route('events.edit', $event->id) }}" class="btn btn-success px-5 mx-2 shadow-sm">
                                     <i class="fas fa-edit"></i> 編集する
@@ -143,7 +143,47 @@
                             </div>
                         </div>
 
-                    {{-- 3. 一般ユーザーの場合 --}}
+                        {{-- 主催者専用：参加申込者リスト --}}
+                        <div class="mt-5 text-left">
+                            <h5 class="font-weight-bold mb-3 text-dark border-left border-info pl-3">
+                                <i class="fas fa-users mr-2 text-info"></i> 参加申込者リスト
+                            </h5>
+                            <div class="table-responsive shadow-sm border rounded bg-white">
+                                <table class="table table-hover mb-0">
+                                    <thead class="bg-light small font-weight-bold text-muted">
+                                        <tr>
+                                            <th class="border-0 px-4">氏名</th>
+                                            <th class="border-0">メールアドレス</th>
+                                            <th class="border-0">申込時コメント</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="small">
+                                        @forelse($event->users as $applicant)
+                                            <tr>
+                                                <td class="align-middle px-4 font-weight-bold">{{ $applicant->name }}</td>
+                                                <td class="align-middle">
+                                                    <a href="mailto:{{ $applicant->email }}" class="text-info">
+                                                        {{ $applicant->email }}
+                                                    </a>
+                                                </td>
+                                                <td class="align-middle text-muted">
+                                                    {{ $applicant->pivot->comment ?? '-' }}
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="3" class="text-center py-5 text-muted">
+                                                    <i class="fas fa-info-circle mb-2"></i><br>
+                                                    現在、参加申込はありません。
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    {{-- 一般ユーザーの場合 --}}
                     @else
                         @if($event->users->contains(Auth::id()))
                             <form action="{{ route('events.cancel', $event->id) }}" method="POST">
@@ -159,7 +199,6 @@
                                 </button>
                                 <p class="text-danger small mt-2">※キャンセルが出るまで申し込みはできません</p>
                             @else
-                                {{-- 申し込み画面へ行く時も from パラメータを引き継ぐ --}}
                                 <a href="{{ route('events.apply', $event->id) }}?from={{ $from }}" class="btn btn-primary btn-lg px-5 shadow-sm">
                                     参加を申し込む
                                 </a>
@@ -183,5 +222,6 @@
     .shadow-inner { box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
     .card { border-radius: 15px; }
     .btn-lg { font-weight: bold; }
+    .border-left { border-left: 5px solid !important; }
 </style>
 @endsection

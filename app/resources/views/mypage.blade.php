@@ -2,11 +2,11 @@
 
 @section('content')
 <div class="container">
-    {{-- ヘッダーエリア：ユーザー情報を強調 --}}
+    {{-- ヘッダーエリア：ユーザー情報 --}}
     <div class="d-flex justify-content-between align-items-end mb-4 border-bottom pb-3">
         <div>
             <h2 class="mb-0 font-weight-bold">マイページ</h2>
-            <p class="text-muted mb-0">おかえりなさい、{{ Auth::user()->name }} さん</p>
+            <p class="text-muted mb-0">{{ Auth::user()->name }} さん</p>
         </div>
         <div>
             <a href="{{ route('profile') }}" class="btn btn-info text-white shadow-sm mr-2">

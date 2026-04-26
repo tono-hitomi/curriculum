@@ -15,39 +15,38 @@ class AdminController extends Controller
     /**
      * 管理者画面のメイン表示
      */
-public function index()
-{
-    // ユーザー一覧はそのまま（停止済みもカウントに含めるならそのままでOK）
-    $users = User::withCount([
-        'participatingEvents as applications_count', 
-        'events as events_count'
-    ])->get();
+    public function index()
+    {
+        $users = User::withCount([
+            'participatingEvents as applications_count', 
+            'events as events_count'
+        ])->get();
 
-    // ★修正：主催者が削除されていないイベントのみ取得
-    $events = Event::whereHas('user')
-        ->orderBy('report_count', 'desc')
-        ->take(10)
-        ->get();
+        // 主催者が削除されていないイベントのみ取得（報告数が多い順）
+        $events = Event::whereHas('user')
+            ->orderBy('report_count', 'desc')
+            ->take(10)
+            ->get();
 
-    // ★修正：主催者または申込者が削除されていない参加申込のみ取得
-    $applications = DB::table('event_user')
-        ->join('users', 'event_user.user_id', '=', 'users.id')
-        ->join('events', 'event_user.event_id', '=', 'events.id')
-        // 主催者のユーザーも結合してチェック
-        ->join('users as owners', 'events.user_id', '=', 'owners.id') 
-        ->select('users.name', 'users.email', 'events.title')
-        ->whereNull('users.deleted_at')   // 申込者が停止されていない
-        ->whereNull('owners.deleted_at')  // 主催者が停止されていない
-        ->get()
-        ->map(function($item) {
-            return (object)[
-                'user' => (object)['name' => $item->name, 'email' => $item->email],
-                'event' => (object)['title' => $item->title]
-            ];
-        });
-    
-    return view("admin.index", compact("users", "events", "applications"));
-}
+        // 主催者または申込者が削除されていない参加申込のみ取得
+        $applications = DB::table('event_user')
+            ->join('users', 'event_user.user_id', '=', 'users.id')
+            ->join('events', 'event_user.event_id', '=', 'events.id')
+            ->join('users as owners', 'events.user_id', '=', 'owners.id') 
+            ->select('users.name', 'users.email', 'events.title')
+            ->whereNull('users.deleted_at')
+            ->whereNull('owners.deleted_at')
+            ->get()
+            ->map(function($item) {
+                return (object)[
+                    'user' => (object)['name' => $item->name, 'email' => $item->email],
+                    'event' => (object)['title' => $item->title]
+                ];
+            });
+        
+        return view("admin.index", compact("users", "events", "applications"));
+    }
+
     /**
      * ユーザー一覧CSVエクスポート
      */
@@ -93,13 +92,13 @@ public function index()
     }
 
     /**
-     * CSV生成共通処理（BOM付き）
+     * CSV
      */
     private function generateCsv($filename, $header, $callback)
     {
         $response = new StreamedResponse(function () use ($header, $callback) {
             $stream = fopen('php://output', 'w');
-            fwrite($stream, pack('C*', 0xEF, 0xBB, 0xBF)); // Excel文字化け防止
+            fwrite($stream, pack('C*', 0xEF, 0xBB, 0xBF)); 
             fputcsv($stream, $header);
             $callback($stream);
             fclose($stream);
@@ -112,16 +111,20 @@ public function index()
 
     // --- 管理画面詳細機能 ---
 
-public function eventList() {
-    // ★修正：主催者が存在するイベントのみ
-    $events = Event::whereHas('user')
-        ->orderBy('id', 'desc')
-        ->paginate(20);
-        
-    return view('admin.events.index', compact('events'));
-}
     /**
-     * 表示状態切り替え（Ajax対応）
+     * 全イベント詳細一覧（報告数が多い順）
+     */
+    public function eventList() {
+        $events = Event::whereHas('user')
+            ->orderBy('report_count', 'desc') // 報告数が多い順
+            ->orderBy('id', 'desc')
+            ->paginate(20);
+            
+        return view('admin.events.index', compact('events'));
+    }
+
+    /**
+     * 表示状態切り替え Ajax
      */
     public function toggleVisible(Event $event) {
         $event->is_visible = !$event->is_visible;
@@ -138,12 +141,21 @@ public function eventList() {
     }
 
     public function userIndex() {
-        $users = User::withCount(['applications', 'events'])->paginate(10);
+        $users = User::withTrashed()
+            ->withCount(['participatingEvents as applications_count', 'events as events_count'])
+            ->paginate(10);
         return view('admin.users.index', compact('users'));
     }
 
     public function confirmSuspend(User $user) {
         return view('admin.users.suspend', compact('user'));
+    }
+
+    public function restore(Request $request, $id)
+    {
+        $user = User::withTrashed()->findOrFail($id);
+        $user->restore();
+        return redirect()->route('admin.users.index')->with('status', 'ユーザーの利用停止を解除しました。');
     }
 
     public function suspend(User $user) {
@@ -154,28 +166,45 @@ public function eventList() {
     /**
      * 違反報告一覧
      */
-    public function reportIndex()
+public function reportIndex()
+{
+    $events = Event::with(['user', 'users'])
+        ->withCount('users')
+        ->orderBy('id', 'desc')
+        ->paginate(10);
+
+    return view('admin.reports.index', compact('events'));
+}
+    /**
+     * 該当イベントの違反報告を一括削除
+     */
+    public function resetReports($eventId)
     {
-        $reports = Report::with(['user', 'event'])->latest()->paginate(10);
-        return view('admin.reports.index', compact('reports'));
+        $event = Event::findOrFail($eventId);
+        
+        // 関連する報告をすべて削除
+        Report::where('event_id', $eventId)->delete();
+        
+        // カウントを0にする
+        $event->report_count = 0;
+        $event->save();
+
+        return back()->with('status', 'イベントの違反報告をすべて削除しました。');
     }
 
     /**
-     * 違反報告の削除（棄却）
+     * 違反報告の削除
      */
     public function reportDestroy($id)
     {
-        // カラム名を id に戻したので、標準の findOrFail で確実に動作します
         $report = Report::findOrFail($id);
 
-        // イベント側の報告数カウントを減らす
         if ($report->event) {
             $report->event->decrement('report_count');
         }
 
         $report->delete();
 
-        // 削除後は「違反報告一覧」へリダイレクト
-        return redirect('/admin/reports')->with('status', '違反報告を削除（棄却）しました。');
+        return back()->with('status', '違反報告を削除しました。');
     }
 }

@@ -9,15 +9,13 @@ class UpdateEventsTableForRequirements extends Migration
     public function up()
     {
         Schema::table('events', function (Blueprint $table) {
-            // 一旦既存の古い設定のカラムを削除
             $table->dropColumn(['date', 'format', 'capacity']);
         });
 
         Schema::table('events', function (Blueprint $table) {
-            // 要件に合わせた型で作り直し
-            $table->dateTime('date')->after('comment'); // 開催日時（datetime）
-            $table->string('format')->after('date');    // イベント形式（string）
-            $table->integer('capacity')->nullable()->after('format'); // 定員数（任意なのでnullable）
+            $table->dateTime('date')->after('comment'); 
+            $table->string('format')->after('date');    
+            $table->integer('capacity')->nullable()->after('format'); 
         });
     }
 

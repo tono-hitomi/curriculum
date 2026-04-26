@@ -4,7 +4,7 @@
 <div class="container">
     <div class="text-center mb-4">
         <h2 class="text-danger"><i class="fas fa-exclamation-triangle"></i> 違反報告</h2>
-        <p class="text-muted">不適切なコンテンツを報告し、コミュニティの安全にご協力ください。</p>
+        <p class="text-muted">不適切なコンテンツを報告してください。</p>
     </div>
 
     <div class="row justify-content-center">
@@ -29,7 +29,7 @@
                     <div class="form-group">
                         <label for="report_comment" class="font-weight-bold">報告理由・内容</label>
                         <textarea name="report_comment" id="report_comment" class="form-control" rows="8" placeholder="具体的な問題点を入力してください" required></textarea>
-                        <small class="form-text text-muted">※運営事務局で内容を確認させていただきます。</small>
+                        <small class="form-text text-muted">※運営で内容を確認させていただきます。</small>
                     </div>
 
                     <div class="text-center mt-4">

@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes; // 追記
+use Illuminate\Database\Eloquent\SoftDeletes; 
 
 class User extends Authenticatable
 {
-    use Notifiable, SoftDeletes; // SoftDeletes を追記
+    use Notifiable, SoftDeletes; 
 
     /**
      * The attributes that are mass assignable.
@@ -39,7 +39,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * リレーション：自分が作成（主催）したイベント
+     * 自分が作成（主催）したイベント
      */
     public function events()
     {
@@ -47,7 +47,7 @@ class User extends Authenticatable
     }
 
     /**
-     * リレーション：自分が参加を申し込んだイベント
+     * 自分が参加を申し込んだイベント
      */
     public function participatingEvents()
     {
@@ -55,7 +55,7 @@ class User extends Authenticatable
     }
 
     /**
-     * リレーション：ブックマーク（bookmarks() と bookmarkedEvents() 両方で対応）
+     * ブックマーク
      */
     public function bookmarks()
     {

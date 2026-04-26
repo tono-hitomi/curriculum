@@ -12,12 +12,12 @@
             </div>
 
             <div class="card shadow-sm overflow-hidden">
-                {{-- 上部のアクセントカラー --}}
+                {{-- 上部 --}}
                 <div style="height: 100px; background-color: #3490dc;"></div>
                 
                 <div class="card-body pt-0">
                     <div class="row px-4">
-                        {{-- 左側：アバター画像（上に少しはみ出すデザイン） --}}
+                        {{-- 左側：画像 --}}
                         <div class="col-md-4 text-center" style="margin-top: -50px;">
                             <div class="bg-white p-2 rounded-circle shadow-sm d-inline-block">
                                 @if($user->image)

@@ -7,12 +7,12 @@
             
             {{-- 成功メッセージの表示 --}}
             @if (session('status'))
-                <div class="alert alert-success shadow-sm" role="alert">
+                <div class="alert alert-success shadow-sm border-0" role="alert">
                     {{ session('status') }}
                 </div>
             @endif
 
-            {{-- 検索 --}}
+            {{-- 検索フォーム --}}
             <div class="card shadow-sm mb-4 border-0">
                 <div class="card-header bg-white font-weight-bold text-muted border-bottom-0">
                     <i class="fas fa-search"></i> イベントを絞り込む
@@ -24,13 +24,16 @@
                         </div>
 
                         <div class="form-group mb-2">
-                            <input type="date" name="date" class="form-control mr-2" value="{{ request('date') }}">
+                            <label class="sr-only">開始日</label>
+                            <input type="date" name="from_date" class="form-control mr-1" value="{{ request('from_date') }}">
+                            <span class="mr-1">〜</span>
+                            <label class="sr-only">終了日</label>
+                            <input type="date" name="to_date" class="form-control mr-2" value="{{ request('to_date') }}">
                         </div>
 
                         <div class="form-group mb-2">
                             <select name="format" class="form-control mr-2">
                                 <option value="">配信形式を選択</option>
-                                {{-- valueを数値(0,1..)から文字列(Zoom, YouTube..)に変更 --}}
                                 <option value="Zoom" {{ request('format') === 'Zoom' ? 'selected' : '' }}>Zoom</option>
                                 <option value="YouTube" {{ request('format') === 'YouTube' ? 'selected' : '' }}>YouTube</option>
                                 <option value="対面" {{ request('format') === '対面' ? 'selected' : '' }}>対面</option>
@@ -45,89 +48,89 @@
             </div>
 
             {{-- メイン一覧 --}}
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 font-weight-bold">開催イベント一覧</h5>
-                    @auth
-                        <a href="{{ route('mypage') }}" class="btn btn-sm btn-outline-primary px-3 shadow-sm">
-                            <i class="fas fa-user-circle"></i> マイページへ
-                        </a>
-                    @endauth
-                </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0 font-weight-bold text-muted">開催イベント一覧</h5>
+                @auth
+                    <a href="{{ route('mypage') }}" class="btn btn-sm btn-outline-primary px-3 shadow-sm bg-white">
+                        <i class="fas fa-user-circle"></i> マイページへ
+                    </a>
+                @endauth
+            </div>
 
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="bg-light text-muted">
-                                <tr>
-                                    <th style="width: 40%" class="border-top-0 pl-4">イベント内容</th>
-                                    <th style="width: 20%" class="border-top-0 text-center">主催者</th>
-                                    <th style="width: 20%" class="border-top-0 text-center">定員状況</th>
-                                    <th style="width: 20%" class="border-top-0 text-right pr-4">アクション</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($events as $event)
-                                    <tr>
-                                        <td class="align-middle pl-4">
-                                            {{-- 文字列によるバッジ表示の出し分け --}}
-                                            @if($event->format === 'Zoom')
-                                                <span class="badge badge-info mb-1 text-white">Zoom</span>
-                                            @elseif($event->format === 'YouTube')
-                                                <span class="badge badge-danger mb-1">YouTube</span>
-                                            @elseif($event->format === '対面')
-                                                <span class="badge badge-success mb-1">対面</span>
-                                            @else
-                                                <span class="badge badge-secondary mb-1">その他</span>
-                                            @endif
-                                            
-                                            <div class="font-weight-bold text-primary h6 mb-1">{{ $event->title }}</div>
-                                            <small class="text-muted">
-                                                <i class="far fa-calendar-alt"></i> {{ \Carbon\Carbon::parse($event->date)->format('Y/m/d') }}
-                                            </small>
-                                        </td>
-                                        <td class="align-middle text-center text-muted small">
-                                            <i class="far fa-user-circle"></i> {{ $event->user->name ?? '不明' }}
-                                        </td>
-                                        <td class="align-middle text-center">
-                                            <span class="font-weight-bold {{ (!is_null($event->capacity) && $event->users->count() >= $event->capacity) ? 'text-danger' : 'text-dark' }}">
-                                                {{ $event->users->count() }}
-                                            </span>
-                                            <span class="text-muted small"> / {{ $event->capacity ?? '∞' }} 名</span>
-                                        </td>
-                                        <td class="align-middle text-right pr-4">
-                                            <div class="d-flex justify-content-end align-items-center">
-                                                <a href="{{ route('events.show', $event->id) }}" class="btn btn-sm btn-info text-white px-3 shadow-sm mr-2">詳細</a>
+            <div class="row">
+                @forelse ($events as $event)
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 shadow-sm border-0 event-card overflow-hidden">
+                            
+                            {{-- 形式バッジとブックマークを画像の外に配置 --}}
+                            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center px-3 pt-3 pb-0">
+                                <div>
+                                    @if($event->format === 'Zoom')
+                                        <span class="badge badge-info text-white px-2 py-1 small">Zoom</span>
+                                    @elseif($event->format === 'YouTube')
+                                        <span class="badge badge-danger px-2 py-1 small">YouTube</span>
+                                    @elseif($event->format === '対面')
+                                        <span class="badge badge-success px-2 py-1 small">対面</span>
+                                    @else
+                                        <span class="badge badge-secondary px-2 py-1 small">その他</span>
+                                    @endif
+                                </div>
 
-                                                @auth
-                                                    <button type="button" 
-                                                            class="ajax-bookmark-btn" 
-                                                            data-id="{{ $event->id }}"
-                                                            style="border: none; background: none; outline: none; transition: transform 0.2s; padding: 0;">
-                                                        @if(Auth::user()->bookmarks()->where('event_id', $event->id)->exists())
-                                                            <span class="star-icon" style="color: #f1c40f; font-size: 1.3rem;">★</span>
-                                                        @else
-                                                            <span class="star-icon" style="color: #ccc; font-size: 1.3rem;">☆</span>
-                                                        @endif
-                                                    </button>
-                                                @else
-                                                    <span style="color: #ccc; font-size: 1.3rem; opacity: 0.5;">☆</span>
-                                                @endauth
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center py-5 text-muted">
-                                            <i class="fas fa-calendar-times fa-3x mb-3 d-block opacity-50"></i>
-                                            該当するイベントは見つかりませんでした。
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                @auth
+                                    <button type="button" class="ajax-bookmark-btn" data-id="{{ $event->id }}" style="border: none; background: none; outline: none; padding: 0;">
+                                        <span class="star-icon" style="color: {{ Auth::user()->bookmarks()->where('event_id', $event->id)->exists() ? '#f1c40f' : '#ccc' }}; font-size: 1.5rem;">
+                                            {{ Auth::user()->bookmarks()->where('event_id', $event->id)->exists() ? '★' : '☆' }}
+                                        </span>
+                                    </button>
+                                @else
+                                    <span style="color: #eee; font-size: 1.5rem;">☆</span>
+                                @endauth
+                            </div>
+
+                            {{-- 画像エリア --}}
+                            <div class="image-container" style="width: 100%; height: 200px; background-color: #f8f9fa; margin-top: 10px;">
+                                <a href="{{ route('events.show', $event->id) }}">
+                                    @if($event->image)
+                                        <img src="{{ asset('storage/event_images/' . $event->image) }}" alt="event image" style="width: 100%; height: 100%; object-fit: contain; background-color: #efefef;">
+                                    @else
+                                        <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+                                            <i class="far fa-image fa-2x mb-1"></i>
+                                            <small style="font-size: 0.6rem;">NO IMAGE</small>
+                                        </div>
+                                    @endif
+                                </a>
+                            </div>
+
+                            {{-- 情報エリア --}}
+                            <div class="card-body">
+                                <h5 class="card-title font-weight-bold mb-2">
+                                    <a href="{{ route('events.show', $event->id) }}" class="text-dark text-decoration-none">{{ $event->title }}</a>
+                                </h5>
+                                
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="small text-muted">
+                                        <i class="far fa-calendar-alt"></i> {{ \Carbon\Carbon::parse($event->date)->format('Y/m/d') }}
+                                        <span class="mx-1">|</span>
+                                        <i class="far fa-user-circle"></i> {{ $event->user->name ?? '不明' }}
+                                    </div>
+                                    <div class="small">
+                                        <span class="font-weight-bold {{ (!is_null($event->capacity) && $event->users->count() >= $event->capacity) ? 'text-danger' : 'text-primary' }}">
+                                            {{ $event->users->count() }}
+                                        </span>
+                                        <span class="text-muted">/{{ $event->capacity ?? '∞' }} 名</span>
+                                    </div>
+                                </div>
+
+                                <a href="{{ route('events.show', $event->id) }}" class="btn btn-primary btn-block shadow-sm py-2">詳細を見る</a>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                @empty
+                    <div class="col-12 text-center py-5 text-muted">
+                        <i class="fas fa-calendar-times fa-3x mb-3 d-block opacity-50"></i>
+                        該当するイベントは見つかりませんでした。
+                    </div>
+                @endforelse
             </div>
 
         </div>
@@ -135,12 +138,33 @@
 </div>
 
 <style>
-    .card { border-radius: 10px; overflow: hidden; }
-    .table thead th { font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }
-    .ajax-bookmark-btn:hover { transform: scale(1.3); cursor: pointer; }
-    .btn-info { background-color: #17a2b8; border: none; }
-    .btn-info:hover { background-color: #138496; }
-    .badge { font-weight: 500; padding: 0.4em 0.6em; min-width: 70px; text-align: center; }
+    .event-card {
+        transition: transform 0.3s, box-shadow 0.3s;
+        border-radius: 12px !important;
+    }
+    .event-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 20px rgba(0,0,0,0.1) !important;
+    }
+    .image-container {
+        overflow: hidden;
+    }
+    .image-container img {
+        transition: transform 0.5s;
+    }
+    .event-card:hover .image-container img {
+        transform: scale(1.05);
+    }
+    .ajax-bookmark-btn {
+        transition: transform 0.2s;
+    }
+    .ajax-bookmark-btn:hover {
+        transform: scale(1.2);
+    }
+    .badge {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
 </style>
 
 <script>
@@ -148,7 +172,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookmarkButtons = document.querySelectorAll('.ajax-bookmark-btn');
 
     bookmarkButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
             const eventId = this.dataset.id;
             const starIcon = this.querySelector('.star-icon');
             const url = `/events/${eventId}/bookmark`;
@@ -173,12 +198,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     starIcon.style.color = '#f1c40f';
                 } else {
                     starIcon.textContent = '☆';
-                    starIcon.style.color = '#ccc';
+                    starIcon.style.color = '#ccc'; {{-- 背景白 --}}
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-            })
+            .catch(error => console.error('Error:', error))
             .finally(() => {
                 this.style.pointerEvents = 'auto';
             });

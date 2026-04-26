@@ -21,34 +21,36 @@ class EventController extends Controller
     }
 
     /**
-     * イベント一覧 (Resource: index)
+     * イベント一覧 ( index)
      */
 public function index(Request $request)
 {
-    // 主催者情報と一緒に取得し、かつ「主催者が削除されていない（存在する）」ものだけに絞り込む
-    $query = Event::with('user')->whereHas('user'); 
+    $query = Event::where('is_visible', true);
 
+    // キーワード検索
     if ($request->filled('keyword')) {
-        $keyword = '%' . $request->keyword . '%';
-        $query->where(function($q) use ($keyword) {
-            $q->where('title', 'like', $keyword)
-              ->orWhere('comment', 'like', $keyword);
-        });
+        $query->where('title', 'like', '%' . $request->keyword . '%');
     }
 
-    if ($request->filled('date')) {
-        $query->whereDate('date', $request->date);
+    // 期間指定（From）
+    if ($request->filled('from_date')) {
+        $query->whereDate('date', '>=', $request->from_date);
     }
 
+    // 期間指定（To）
+    if ($request->filled('to_date')) {
+        $query->whereDate('date', '<=', $request->to_date);
+    }
+
+    // 形式検索
     if ($request->filled('format')) {
         $query->where('format', $request->format);
     }
 
-    $events = $query->latest()->get();
-    
+    $events = $query->orderBy('date', 'asc')->get();
+
     return view('home', compact('events'));
-}
-    /**
+}    /**
      * 新規作成画面
      */
     public function create()
@@ -65,7 +67,7 @@ public function index(Request $request)
             'title' => 'required|max:255',
             'description' => 'required',
             'date' => 'required|date|after:now', 
-            'format' => 'required|string', // 文字列としてバリデーション
+            'format' => 'required|string', 
             'image' => 'required|image|mimes:jpeg,png,jpg|max:2048', 
             'capacity' => 'nullable|integer|min:1',
         ]);
@@ -76,10 +78,11 @@ public function index(Request $request)
         $event->comment = $request->description; 
         $event->date = $request->date;
         
-        // formatカラムに文字列（Zoom, 対面など）を直接保存
         $event->format = $request->format;
         
         $event->capacity = $request->capacity;
+
+        $event->is_visible = true;
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('public/event_images');
@@ -97,7 +100,6 @@ public function index(Request $request)
     public function show(Event $event)
     {
         if (!$event->user || $event->user->trashed()) {
-        // 「このイベントは削除されました」という専用ビューを表示するか、404エラーを出す
         return response()->view('errors.event_deleted', [], 404);
     }
         $event->load(['user', 'users']);
@@ -136,7 +138,7 @@ public function index(Request $request)
         $event->title = $request->title;
         $event->comment = $request->description;
         $event->date = $request->date;
-        $event->format = $request->format; // 更新時も同様
+        $event->format = $request->format; 
         $event->capacity = $request->capacity;
 
         if ($request->hasFile('image')) {
@@ -170,7 +172,7 @@ public function index(Request $request)
         return redirect()->route('mypage')->with('status', 'イベントを削除しました。');
     }
 
-    /* --- その他 (ブックマーク、マイページ、参加、報告) --- */
+    /* --- ブックマーク、マイページ、参加、報告 --- */
 
     public function bookmarkIndex()
     {

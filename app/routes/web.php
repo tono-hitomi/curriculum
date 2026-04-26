@@ -32,15 +32,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/events/{event}/report', [EventController::class, 'report'])->name('events.report');
     Route::post('/events/{event}/report', [EventController::class, 'storeReport'])->name('events.report.store');
 
-    // --- 管理者専用画面グループ ---
+// --- 管理者専用画面グループ ---
     Route::prefix('admin')->middleware(['can:admin'])->name('admin.')->group(function () {
         
-        // 違反報告削除：GETで実行できるよう、グループの先頭に配置
-        Route::get('/delete-report/{id}', [AdminController::class, 'reportDestroy'])->name('reports.destroy.special');
+        // 違反報告リセット
+        Route::delete('/events/{event}/reports-reset', [AdminController::class, 'resetReports'])->name('reports.destroy');
 
         Route::get('/', [AdminController::class, 'index'])->name('index');
         Route::get('/events', [AdminController::class, 'eventList'])->name('events.index');
         Route::patch('/events/{event}/toggle-visible', [AdminController::class, 'toggleVisible'])->name('events.toggleVisible');
+        Route::post('/users/{id}/restore', [AdminController::class, 'restore'])->name('users.restore');
         
         // 違反報告一覧
         Route::get('/reports', [AdminController::class, 'reportIndex'])->name('reports.index');

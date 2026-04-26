@@ -2,125 +2,116 @@
 
 @section('content')
 <div class="container">
-    <h2 class="mb-4 font-weight-bold">違反報告一覧</h2>
+    <h2 class="mb-4 font-weight-bold">参加申込管理</h2>
 
     @if (session('status'))
         <div class="alert alert-success shadow-sm mb-4">{{ session('status') }}</div>
     @endif
 
     <div class="card shadow-sm border-0">
-        <table class="table table-hover text-center mb-0">
-            <thead class="table-secondary">
-                <tr>
-                    <th>報告者</th>
-                    <th>対象イベント</th>
-                    <th>報告内容</th>
-                    <th>報告日時</th>
-                    <th>表示 / 非表示</th> {{-- ★列を分離 --}}
-                    <th>報告削除</th>       {{-- ★列を分離 --}}
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($reports as $report)
-                <tr>
-                    <td>{{ $report->user->name }}</td>
-                    <td class="text-left">
-                        <a href="/events/{{ $report->event_id }}?from=admin_report" class="font-weight-bold text-primary">
-                            {{ $report->event->title ?? '削除済みのイベント' }}
-                        </a>
-                    </td>
-                    <td class="text-left" style="max-width: 250px;">
-                        <small class="text-muted">{{ $report->content }}</small>
-                    </td>
-                    <td>{{ $report->created_at->format('Y/m/d H:i') }}</td>
-                    
-                    {{-- ★表示 / 非表示ボタンの列 --}}
-                    <td>
-                        @if($report->event)
-                            <button type="button" 
-                                class="btn {{ $report->event->is_visible ? 'btn-warning' : 'btn-success' }} btn-sm px-3 toggle-visible-btn" 
-                                data-id="{{ $report->event_id }}"
-                                style="width: 85px;">
-                                {{ $report->event->is_visible ? '非表示' : '表示' }}
+        <div class="table-responsive">
+            <table class="table table-hover text-center mb-0">
+                <thead class="table-secondary">
+                    <tr>
+                        <th>ID</th>
+                        <th class="text-left">イベント名</th>
+                        <th>主催者</th>
+                        <th>開催日</th>
+                        <th>申込数</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($events as $event)
+                    <tr>
+                        <td>{{ $event->id }}</td>
+                        <td class="text-left">
+                            <a href="{{ route('events.show', $event->id) }}" class="font-weight-bold text-primary">
+                                {{ Str::limit($event->title, 30) }}
+                            </a>
+                        </td>
+                        <td>{{ $event->user->name ?? '不明' }}</td>
+                        <td>{{ \Carbon\Carbon::parse($event->date)->format('Y/m/d') }}</td>
+                        <td>
+                            <span class="badge badge-pill badge-primary px-3 py-2">
+                                {{ $event->users_count }} 名
+                            </span>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-outline-info btn-sm px-3" 
+                                    data-toggle="modal" data-target="#modal-event-{{ $event->id }}">
+                                申込者を確認
                             </button>
-                        @else
-                            <span class="text-muted small">-</span>
-                        @endif
-                    </td>
-
-                    {{-- ★報告削除ボタンの列 --}}
-                    <td>
-                        <a href="/admin/delete-report/{{ $report->id }}" 
-                           class="btn btn-outline-danger btn-sm px-3"
-                           onclick="return confirm('この報告を削除（棄却）しますか？');">
-                            報告を削除
-                        </a>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" class="text-muted py-4">現在、違反報告はありません。</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-muted py-5">現在、公開されているイベントはありません。</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
+    {{-- ページネーション --}}
     <div class="d-flex justify-content-center mt-4">
-        {{ $reports->links() }}
+        {{ $events->links() }}
     </div>
 
-    <div class="text-right mt-3">
-        <a href="/admin" class="btn btn-outline-secondary px-4">
+    <div class="text-right mt-3 mb-5">
+        <a href="/admin" class="btn btn-outline-secondary px-4 shadow-sm">
             <i class="fas fa-home"></i> メインへ戻る
         </a>
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const buttons = document.querySelectorAll('.toggle-visible-btn');
+@foreach($events as $event)
+<div class="modal fade" id="modal-event-{{ $event->id }}" tabindex="-1" role="dialog" aria-labelledby="label-{{ $event->id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="label-{{ $event->id }}">
+                    <i class="fas fa-users mr-2"></i>【{{ $event->title }}】申込者一覧
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0" style="max-height: 60vh; overflow-y: auto;">
+                <table class="table table-striped mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th class="border-top-0">ユーザー名</th>
+                            <th class="border-top-0">メールアドレス</th>
+                            <th class="border-top-0">申込時のコメント</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($event->users as $applicant)
+                        <tr>
+                            <td class="align-middle">{{ $applicant->name }}</td>
+                            <td class="align-middle">{{ $applicant->email }}</td>
+                            <td class="align-middle">
+                                <div class="bg-white p-2 rounded border" style="font-size: 0.85rem; min-height: 40px;">
+                                    {{ $applicant->pivot->comment ?? 'コメントなし' }}
+                                </div>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="3" class="text-center py-5 text-muted">申込者はまだいません。</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endforeach
 
-    buttons.forEach(button => {
-        button.addEventListener('click', function() {
-            const eventId = this.dataset.id;
-            const url = `/admin/events/${eventId}/toggle-visible`;
-
-            this.disabled = true;
-
-            fetch(url, {
-                method: 'PATCH',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'X-Requested-With': 'XMLHttpRequest', 
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('通信エラーが発生しました');
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    if (data.is_visible) {
-                        this.classList.remove('btn-success');
-                        this.classList.add('btn-warning');
-                        this.textContent = '非表示';
-                    } else {
-                        this.classList.remove('btn-warning');
-                        this.classList.add('btn-success');
-                        this.textContent = '表示';
-                    }
-                }
-            })
-            .catch(error => {
-                alert(error.message);
-            })
-            .finally(() => {
-                this.disabled = false;
-            });
-        });
-    });
-});
-</script>
 @endsection

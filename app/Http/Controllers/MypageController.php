@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage; // ファイル削除に必要
+use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Facades\Hash;
 
 class MypageController extends Controller
@@ -18,7 +18,6 @@ class MypageController extends Controller
     {
         $user = Auth::user();
 
-        // 参加・主催・ブックマークのデータを取得
         $participatingEvents = $user->participatingEvents()->get();
         $myEvents = $user->events()->get();
         $bookmarkedEvents = $user->bookmarkedEvents()->get();
@@ -28,7 +27,6 @@ class MypageController extends Controller
 
     public function profile()
 {
-    // 現在ログインしているユーザーの情報を渡す
     return view('profile', ['user' => Auth::user()]);
 }
 
@@ -85,7 +83,7 @@ public function deleteAccount(Request $request)
 {
     $user = Auth::user();
 
-    // バリデーション（入力チェック）
+    // バリデーション
     $request->validate([
         'name' => 'required',
         'password' => 'required',
@@ -97,7 +95,6 @@ public function deleteAccount(Request $request)
     }
 
     // データの削除
-    // ※画像がある場合は削除しておくとストレージが節約できます
     if ($user->image) {
         Storage::delete('public/profile_images/' . $user->image);
     }

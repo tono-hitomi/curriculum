@@ -11,7 +11,7 @@
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
-            {{-- パンくずリスト（前の画面に戻りやすくするため） --}}
+            {{-- パンくずリスト　いらんかも --}}
             <nav aria-label="breadcrumb" class="mb-3">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('admin.index') }}">管理メイン</a></li>
@@ -26,7 +26,7 @@
                 </div>
                 <div class="card-body text-center py-5">
                     <p class="mb-4 text-muted">
-                        以下のユーザーを利用停止（論理削除）します。<br>
+                        以下のユーザーを利用停止します。<br>
                         停止されたユーザーはログインができなくなります。
                     </p>
                     

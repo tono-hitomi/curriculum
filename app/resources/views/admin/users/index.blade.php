@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-    {{-- パンくずリスト --}}
+    {{-- パンくずリスト いらんかも --}}
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb bg-transparent p-0">
             <li class="breadcrumb-item"><a href="{{ route('admin.index') }}">管理メイン</a></li>
@@ -33,9 +33,20 @@
                     <td class="align-middle">{{ $user->applications_count }}件</td>
                     <td class="align-middle">{{ $user->events_count }}件</td>
                     <td class="align-middle">
-                        <a href="{{ route('admin.users.confirm_suspend', $user->id) }}" class="btn btn-danger btn-sm px-3" style="width: 100px;">
-                            利用停止
-                        </a>
+                        @if($user->trashed())
+        {{-- 停止中の場合：解除ボタンを表示 --}}
+        <form action="{{ route('admin.users.restore', $user->id) }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit" class="btn btn-success btn-sm px-3" style="width: 100px;" onclick="return confirm('このユーザーの利用停止を解除しますか？')">
+                停止解除
+            </button>
+        </form>
+    @else
+        {{-- 有効な場合：利用停止ボタンを表示 --}}
+        <a href="{{ route('admin.users.confirm_suspend', $user->id) }}" class="btn btn-danger btn-sm px-3" style="width: 100px;">
+            利用停止
+        </a>
+    @endif
                     </td>
                 </tr>
                 @endforeach
@@ -48,7 +59,7 @@
         {{ $users->links() }}
     </div>
 
-    {{-- メインへ戻る（イベント詳細とデザイン・位置を統一） --}}
+    {{-- メインへ戻る --}}
     <div class="text-right mt-3">
         <a href="{{ route('admin.index') }}" class="btn btn-outline-secondary px-4">メインへ</a>
     </div>

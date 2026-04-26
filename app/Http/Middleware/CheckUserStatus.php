@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Auth;
 class CheckUserStatus
 {
     /**
-     * 特定のユーザーが利用停止（ソフトデリート）されているかチェック
+     * ユーザーが利用停止されているかチェック
      */
     public function handle(Request $request, Closure $next)
     {
-        // ログインしていて、かつそのユーザーが削除（ソフトデリート）されている場合
+        // ログインしていて、かつそのユーザーが削除されている場合
         if (Auth::check() && Auth::user()->trashed()) {
             Auth::logout(); // 強制ログアウト
             
